@@ -64,7 +64,7 @@ pacf(case.ts.1.2)
 ## october 1 - december 20
 bxcx.2.1 <- BoxCox.ar(case.ts.2.1)
 bxcx.2.1$mle
-bxcx.2.2$ci
+bxcx.2.1$ci
 acf(case.ts.2.1)
 pacf(case.ts.2.1)
 
