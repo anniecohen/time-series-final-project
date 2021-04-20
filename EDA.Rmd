@@ -1,0 +1,78 @@
+---
+title: "EDA"
+author: "Annie Cohen and Lian Morales"
+date: "4/19/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(tidyverse)
+library(lubridate)
+library(TSA)
+library(RCurl)
+```
+
+```{r}
+# pulling the data from the Los Angeles County GitHub
+casedata <- read.csv(text = getURL("https://raw.githubusercontent.com/datadesk/california-coronavirus-data/master/latimes-county-totals.csv")) %>%
+  filter(county == "Los Angeles") %>%
+  mutate(date = date(date), month = month(date)) %>%
+  map_df(rev) %>%
+  filter(!is.na(new_confirmed_cases) & between(date, date("2020-04-01"),date("2021-03-31")))
+
+# creating the time series
+case.ts <- ts(casedata$new_confirmed_cases, start = 1,  frequency = 1)
+
+# averaging dec 25th and 26th
+case.ts[269] <- 14711
+case.ts[270] <- 14712
+
+## april 1 - sep 30
+case.ts.1 <- ts(case.ts[1:183], start = 1, frequency = 1)
+
+# april 1 - jul 14
+case.ts.1.1 <- ts(case.ts[1:105], start = 1, frequency = 1)
+# jul 15 - sep 30
+case.ts.1.2 <- ts(case.ts[106:183], start = 1, frequency = 1)
+
+## oct 1 - mar 31
+case.ts.2 <- ts(case.ts[184:365], start = 1, frequency = 1)
+
+# oct 1 - dec 20
+case.ts.2.1 <- ts(case.ts[184:264], start = 1, frequency = 1)
+# dec 21 - mar 31
+case.ts.2.2 <- ts(case.ts[265:365], start = 1, frequency = 1)
+
+```
+
+```{r}
+## april 1 - july 14
+bxcx.1.1 <- BoxCox.ar(case.ts.1.1)
+bxcx.1.1$mle
+bxcx.1.1$ci
+acf(case.ts.1.1)
+pacf(case.ts.1.1)
+
+## july 15 - september 30
+bxcx.1.2 <- BoxCox.ar(case.ts.1.2)
+bxcx.1.2$mle
+bxcx.1.2$ci
+acf(case.ts.1.2)
+pacf(case.ts.1.2)
+
+## october 1 - december 20
+bxcx.2.1 <- BoxCox.ar(case.ts.2.1)
+bxcx.2.1$mle
+bxcx.2.2$ci
+acf(case.ts.2.1)
+pacf(case.ts.2.1)
+
+## december 21 - march 31
+bxcx.2.2 <- BoxCox.ar(case.ts.2.2)
+bxcx.2.2$mle
+bxcx.2.2$ci
+acf(case.ts.2.2)
+pacf(case.ts.2.2)
+```
+
