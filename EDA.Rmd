@@ -13,6 +13,8 @@ library(TSA)
 library(RCurl)
 ```
 
+In our project, we are taking data from the LA times github repository of COVID cases in the LA county. We will be splitting the data up into three sections, by month, and completing our analyses for each subset of the data. In this code, we will complete a Boxcox test to measure significance, data transformation, and confidence intervals to help us understand th data and also how to best analyze it. We will also perform acf and pacf to determine seasonality and check for major outliers and trends in the data. 
+
 ```{r}
 # pulling the data from the Los Angeles County GitHub
 casedata <- read.csv(text = getURL("https://raw.githubusercontent.com/datadesk/california-coronavirus-data/master/latimes-county-totals.csv")) %>%
@@ -46,33 +48,43 @@ case.ts.2.2 <- ts(case.ts[265:365], start = 1, frequency = 1)
 
 ```
 
-```{r}
+```{r, warning = FALSE}
 ## april 1 - july 14
-bxcx.1.1 <- BoxCox.ar(case.ts.1.1)
+bxcx.1.1 <- BoxCox.ar(case.ts.1.1) # error "possible convergence problem: optim gave code = 1"
 bxcx.1.1$mle
 bxcx.1.1$ci
-acf(case.ts.1.1)
-pacf(case.ts.1.1)
+acf(case.ts.1.1, main = "April 1 - July 14")
+pacf(case.ts.1.1, main = "April 1 - July 14")
 
 ## july 15 - september 30
 bxcx.1.2 <- BoxCox.ar(case.ts.1.2)
 bxcx.1.2$mle
 bxcx.1.2$ci
-acf(case.ts.1.2)
-pacf(case.ts.1.2)
+acf(case.ts.1.2, main = "July 15 - September 30")
+pacf(case.ts.1.2, main = "July 15 - September 30")
 
 ## october 1 - december 20
 bxcx.2.1 <- BoxCox.ar(case.ts.2.1)
 bxcx.2.1$mle
 bxcx.2.1$ci
-acf(case.ts.2.1)
-pacf(case.ts.2.1)
+acf(case.ts.2.1, main = "October 1 - December 20")
+pacf(case.ts.2.1, main = "October 1 - December 20")
 
 ## december 21 - march 31
 bxcx.2.2 <- BoxCox.ar(case.ts.2.2)
 bxcx.2.2$mle
 bxcx.2.2$ci
-acf(case.ts.2.2)
-pacf(case.ts.2.2)
+acf(case.ts.2.2, main = "December 21 - March 31")
+pacf(case.ts.2.2, main = "December 21 - March 31")
 ```
 
+In the first boxcox plot, April 1 - July 14, we notice that $\lambda$ overlaps 0, with mle = 0.1. Therefore we will consider log transforming the data. 
+
+From July 15 to September 30, we will also consider a log transformation. 
+
+For October 1st to December 20, we will consider the mle transformation, 0.3. 
+
+And, for December 21 - march 31, the mle is 0.2, which we will transform our data to. 
+
+In each of the acf and pacf's of these subsets of the dataset, there does not seem to show white noise process, however in the pacf there seems to be a seasonal, weekly pattern with spikes around 7, 14 and 21. For the ongoing analysis, we will try to transform these sections of the data to best fit a time series, seasonal model.
+  
