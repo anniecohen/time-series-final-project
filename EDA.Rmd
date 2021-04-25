@@ -92,4 +92,23 @@ For October 1st to December 20, we will consider the mle transformation, 0.3.
 And, for December 21 - march 31, the mle is 0.2, which we will transform our data to. 
 
 In each of the acf and pacf's of these subsets of the dataset, there does not seem to show white noise process, however in the pacf there seems to be a seasonal, weekly pattern with spikes around 7, 14 and 21. For the ongoing analysis, we will try to transform these sections of the data to best fit a time series, seasonal model.
+
+
+```{r}
+# transform data october 1 - december 20 to lambda
+case.ts.2.1_lambda <- case.ts.2.1^0.3
+# plot ts of transformed data
+plot(case.ts.2.1_lambda, ylab = "Lambda transformation of covid cases", xlab = "Time", main = "Transformation by Lambda = 0.3")
+# acf of transformed data 
+acf(as.vector(case.ts.2.1_lambda), lag.max = 27, main = "ACF of Transformation by Lambda = 0.3")
+# pacf of transformed data
+pacf(as.vector(case.ts.2.1_lambda), lag.max = 27, main = "Transformation by Lambda = 0.3")
+# eacf of transformed data
+eacf(as.vector(case.ts.2.1_lambda)) # seems to show a ARMA(1,1)?
+# best subsets ARMA approach
+res = armasubsets(y=case.ts.2.1_lambda, nar= 7, nma = 13, y.name = "test", ar.method = 'ols')
+plot(res) # not sure how to analyze this 
+
+
+```
   
