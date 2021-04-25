@@ -11,6 +11,7 @@ library(tidyverse)
 library(lubridate)
 library(TSA)
 library(RCurl)
+library(forecast)
 ```
 
 In our project, we are taking data from the LA Times Github repository of COVID cases in the LA county (https://github.com/datadesk/california-coronavirus-data). We will be splitting the data up into four sections and completing our analyses for each subset of the data. In this code, we will complete a BoxCox test to measure significance, data transformation, and confidence intervals to help us understand the data and also how to best analyze it. We will also perform acf and pacf to determine seasonality and check for major outliers and trends in the data. 
@@ -97,18 +98,37 @@ In each of the acf and pacf's of these subsets of the dataset, there does not se
 ```{r}
 # transform data october 1 - december 20 to lambda
 case.ts.2.1_lambda <- case.ts.2.1^0.3
+
 # plot ts of transformed data
 plot(case.ts.2.1_lambda, ylab = "Lambda transformation of covid cases", xlab = "Time", main = "Transformation by Lambda = 0.3")
+
 # acf of transformed data 
 acf(as.vector(case.ts.2.1_lambda), lag.max = 27, main = "ACF of Transformation by Lambda = 0.3")
 # pacf of transformed data
 pacf(as.vector(case.ts.2.1_lambda), lag.max = 27, main = "Transformation by Lambda = 0.3")
+
 # eacf of transformed data
 eacf(as.vector(case.ts.2.1_lambda)) # seems to show a ARMA(1,1)?
+
 # best subsets ARMA approach
 res = armasubsets(y=case.ts.2.1_lambda, nar= 7, nma = 13, y.name = "test", ar.method = 'ols')
 plot(res) # not sure how to analyze this 
 
+# find the first difference
+diff1_case.2.1 <- diff(case.ts.2.1_lambda)
+# plot of first difference
+plot(diff1_case.2.1, ylab = "Fist diff of Lambda transformation of covid cases", xlab = "Time", main = "Fist diff & transformation by Lambda = 0.3")
+# acf of first difference  
+acf(as.vector(diff1_case.2.1), lag.max = 27, main = "ACF of 1st difference with lambda")
+# pacf of first difference  
+pacf(as.vector(diff1_case.2.1), lag.max = 27, main = "PACF of 1st difference with lambda = 0.3")
+# eacf of first difference  
+eacf(as.vector(diff1_case.2.1)) 
+# best subsets ARMA approach for first difference  
+res = armasubsets(y=diff1_case.2.1, nar= 7, nma = 13, y.name = "test", ar.method = 'ols')
+plot(res) # not sure how to analyze this 
+# find the best model for first difference   
+auto.arima(diff1_case.2.1)
 
 ```
   
