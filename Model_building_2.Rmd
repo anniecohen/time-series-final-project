@@ -37,11 +37,16 @@ case.ts.1.2 <- ts(case.ts[106:183], start = 1, frequency = 1)
 ## July 15 to September 30
 
 ```{r}
+seasonal.ts.1.2 <- ts(case.ts.1.2, frequency = 7, start = c(1,3))
 trans.seasonal.ts.1.2 <- ts(log(case.ts.1.2), frequency = 7, start = c(1,3))
 trans.ts.1.2 <- ts(log(case.ts.1.2))
 
-plot(trans.seasonal.ts.1.2, type = "l")
-points(trans.seasonal.ts.1.2, pch = as.vector(season(trans.seasonal.ts.1.2)), cex = 0.8, col = "blue")
+
+plot(seasonal.ts.1.2, type = "l", xlab = "Week", ylab = "Number of New Cases", main = "COVID-19 new case data in Los Angeles county \nJuly 15 to September 30")
+points(seasonal.ts.1.2, pch = as.vector(season(seasonal.ts.1.2)), cex = 0.8, col = "blue")
+
+acf(seasonal.ts.1.2, main = "ACF of LA County COVID-19 data \nJuly 15 to September 30")
+pacf(seasonal.ts.1.2, main = "PACF of LA County COVID-19 data \nJuly 15 to September 30")
 ```
 This plot displays a weekly trend, given that the higher values are usually on Wednesday, Thursday, and Friday, while lower values seem to occur on Sunday, Monday, and Tuesday. This suggests that we may want to look into a model that incorporates this seasonality.
 
@@ -58,7 +63,7 @@ These functions help narrow down model choices. Our candidate models are:
 * ARIMA(1,0,0)x(0,1,0)[7]
 * ARIMA(1,0,0)x(0,1,1)[7]
 * ARIMA(0,0,1)x(0,1,0)[7]
-* ARIMA(0,1,2)
+* ARIMA(0,1,2)x(0,1,0)[7]
 
 ```{r}
 arima.seasonal.ts.1.2.1 <-arima(trans.seasonal.ts.1.2, order = c(0,0,2), seasonal = list(order = c(1,0,1), period = 7))

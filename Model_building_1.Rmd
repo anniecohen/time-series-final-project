@@ -32,13 +32,6 @@ case.ts[270] <- 14712
 
 # april 1 - jul 14
 case.ts.1.1 <- ts(case.ts[1:105], start = 1, frequency = 1)
-# jul 15 - sep 30
-case.ts.1.2 <- ts(case.ts[106:183], start = 1, frequency = 1)
-
-# oct 1 - dec 20
-case.ts.2.1 <- ts(case.ts[184:264], start = 1, frequency = 1)
-# dec 21 - mar 31
-case.ts.2.2 <- ts(case.ts[265:365], start = 1, frequency = 1)
 ```
 
 ## April 1 to July 14
@@ -52,14 +45,17 @@ trans.ts.1.1 <- ts(log(case.ts.1.1))
 plot(trans.seasonal.ts.1.1, type = "l")
 points(trans.seasonal.ts.1.1, pch = as.vector(season(trans.seasonal.ts.1.1)), cex = 0.8, col = "blue")
 
+```
+
+```{r}
 mod.11 <- ts(lm(trans.seasonal.ts.1.1~season(trans.seasonal.ts.1.1))$residuals, frequency = 7)
 
-res <- armasubsets(trans.seasonal.ts.1.1, nar = 7, nma = 7)
-plot(res)
-eacf(trans.seasonal.ts.1.1)
-auto.arima(trans.seasonal.ts.1.1, max.P = 5, max.Q = 5)
-auto.arima(trans.ts.1.1, max.P = 5, max.Q = 5)
-auto.arima(mod.11)
+plot(armasubsets(diff.trans.1.1, nar = 7, nma = 7))
+plot(armasubsets(trans.seasonal.ts.1.1, nar = 7, nma = 7))
+eacf(trans.seasonal.ts.1.1) # ARMA(1,1)
+auto.arima(trans.seasonal.ts.1.1, max.P = 5, max.Q = 5) # ARIMA(3,1,0)(1,0,1)[7]
+auto.arima(trans.ts.1.1, max.P = 5, max.Q = 5) # ARIMA(0,1,1)
+auto.arima(mod.11) # ARIMA(0,1,1)
 ```
 
 ```{r}
