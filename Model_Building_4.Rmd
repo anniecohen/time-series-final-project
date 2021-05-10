@@ -30,19 +30,6 @@ case.ts <- ts(casedata$new_confirmed_cases, start = 1,  frequency = 1)
 case.ts[269] <- 14711
 case.ts[270] <- 14712
 
-## april 1 - sep 30
-case.ts.1 <- ts(case.ts[1:183], start = 1, frequency = 1)
-
-# april 1 - jul 14
-case.ts.1.1 <- ts(case.ts[1:105], start = 1, frequency = 1)
-# jul 15 - sep 30
-case.ts.1.2 <- ts(case.ts[106:183], start = 1, frequency = 1)
-
-## oct 1 - mar 31
-case.ts.2 <- ts(case.ts[184:365], start = 1, frequency = 1)
-
-# oct 1 - dec 20
-case.ts.2.1 <- ts(case.ts[184:264], start = 1, frequency = 1)
 # dec 21 - mar 31
 case.ts.2.2 <- ts(case.ts[265:365], start = 1, frequency = 1)
 
@@ -50,146 +37,143 @@ case.ts.2.2 <- ts(case.ts[265:365], start = 1, frequency = 1)
 
 ## December 21 - March 31
 
-## ARIMA(3,1,2) and ARIMA(0,1,3) with drift 
 ```{r}
+set.seed(13)
 # transform data October 1 - December 20 to lambda + add seasonality
-case.ts.2.2_seas.trans <- ts(case.ts.2.2^0.2, frequency = 7)
-case.ts.2.2_trans <- ts(case.ts.2.2^0.2)
+trans.seasonal.ts.2.2  <- ts(case.ts.2.2^0.2, frequency = 7,start = c(1,5))
+seasonal.ts.2.2  <- ts(case.ts.2.2, frequency = 7,start = c(1,5))
+trans.ts.2.2 <- ts(case.ts.2.2^0.2)
+# plot ts of seasonal data
+week. <- season(seasonal.ts.2.2)
+plot(seasonal.ts.2.2, ylab = "Number of New Cases", xlab = "Week", main = "COVID-19 new case data in Los Angeles county \nDecember 21 to March 31")
+points(seasonal.ts.2.2, pch = as.vector(week.), col = "blue", cex = 0.8)
 
-############ SEASONAL 
-# plot ts of transformed seasonal data
-week. <- season(case.ts.2.2_seas.trans)
-plot(case.ts.2.2_seas.trans, ylab = "Lambda transformation of covid cases", xlab = "Time", main = "Transformation by Lambda = 0.3")
-points(case.ts.2.2_seas.trans, pch = as.vector(week.), col = "red")
+week. <- season(trans.seasonal.ts.2.2)
+plot(trans.seasonal.ts.2.2, ylab = "Number of New Cases", xlab = "Week", main = "Lamda-transformed COVID-19 new case data in Los Angeles county \nDecember 21 to March 31")
+points(trans.seasonal.ts.2.2, pch = as.vector(week.), col = "blue", cex = 0.8)
 
-par(mfrow = c(2,2))
 # acf of transformed data 
-acf(as.vector(case.ts.2.2_seas.trans), lag.max = 27, main = "ACF of Transformation by Lambda = 0.2")
+acf(seasonal.ts.2.2, main = "ACF of LA County COVID-19 data \nDecember 21 to March 31")
 # pacf of transformed data
-pacf(as.vector(case.ts.2.2_seas.trans), lag.max = 27, main = "Transformation by Lambda = 0.2")
-# eacf of transformed data
-eacf(as.vector(case.ts.2.2_seas.trans)) # seems to show a ARMA(1,1)?
+pacf(seasonal.ts.2.2, main = "PACF of LA County COVID-19 data \nDecember 21 to March 31")
+
+```
+
+```{r}
+
 # best subsets ARMA approach
-par(mfrow = c(1,1))
-res = armasubsets(y=case.ts.2.2_seas.trans, nar= 7, nma = 13, y.name = "test", ar.method = 'ols')
-plot(res) # not sure how to analyze this 
+eacf(trans.seasonal.ts.2.2)
+eacf(diff(trans.seasonal.ts.2.2, lag = 7))
+plot(armasubsets(y=diff(trans.ts.2.2,lag=7), nar= 7, nma = 13, y.name = "test", ar.method = 'ols'))
+auto.arima(trans.seasonal.ts.2.2)
+auto.arima(trans.ts.2.2)
 
-############# TRANSFORMATION (no seasonality)
-par(mfrow = c(1,1))
-plot(case.ts.2.2_trans, ylab = "Lambda transformation of covid cases", xlab = "Time", main = "Transformation by Lambda = 0.2")
-points(case.ts.2.2_trans, pch = as.vector(week.), col = "red")
+```
 
-par(mfrow = c(2,2))
-# acf of transformed data 
-acf(as.vector(case.ts.2.2_trans), lag.max = 27, main = "ACF of Transformation by Lambda = 0.2")
-# pacf of transformed data
-pacf(as.vector(case.ts.2.2_trans), lag.max = 27, main = "Transformation by Lambda = 0.2")
-# eacf of transformed data
-eacf(as.vector(case.ts.2.2_trans)) # seems to show a ARMA(1,1)?
-# best subsets ARMA approach
-par(mfrow = c(1,1))
-res = armasubsets(y=case.ts.2.2_trans, nar= 7, nma = 13, y.name = "test", ar.method = 'ols')
-plot(res) # not sure how to analyze this 
+ARIMA(3,0,0)x(0,1,1) # dif of arma subset
+ARIMA(3,1,2) # arima sim
+ARIMA(0,1,3) # arima sim
 
-# simulated model prediction
-auto.arima(case.ts.2.2_seas.trans)
-auto.arima(case.ts.2.2_trans)
+## Completing analysis with suggested models
+```{r}
+
+# create aimra models for seasonal and transformed data
+arima.seasonal.ts.2.2.1 <- arima(trans.ts.2.2, order = c(3,0,0), seasonal = list(order = c(0,1,1), period = 7))
+arima.ts.2.2.2 <- arima(trans.seasonal.ts.2.2, order = c(3,1,2))
+arima.ts.2.2.3 <- arima(trans.ts.2.2, order = c(0,1,3))
+```
+
+```{r}
+par(mfrow = c(3,2))
+# plot residuals
+plot(rstandard(arima.seasonal.ts.2.2.1),type = "o", pch=20)
+abline(h=0,lty=2,col="blue")
+plot(rstandard(arima.ts.2.2.2),type = "o", pch=20)
+abline(h=0,lty=2,col="blue")
+plot(rstandard(arima.ts.2.2.3),type = "o", pch=20)
+abline(h=0,lty=2,col="blue")
+
+```
+```{r}
+# AIC
+arima.seasonal.ts.2.2.1$aic
+arima.ts.2.2.2$aic
+arima.ts.2.2.3$aic
 ```
 
 
-## Completing analysis with suggested models
-
 ```{r}
-# simualte aimra models for seasonal and transformed data
-arima.seas_trans.2.2 <- arima(case.ts.2.2_seas.trans, 
-                          order = c(3,1,2))
-arima.trans.2.2 <- arima(case.ts.2.2_trans, order = c(0,1,3))
-
 # residual tests
 
 # check for correlation of error terms
-Box.test(rstandard(arima.seas_trans.2.2), type = "Ljung-Box")
-Box.test(rstandard(arima.trans.2.2), type = "Ljung-Box")
-
-# check for independence of error terms
-runs(rstandard(arima.seas_trans.2.2))
-runs(rstandard(arima.trans.2.2))
-
+Box.test(rstandard(arima.seasonal.ts.2.2.1), type = "Ljung-Box")
+Box.test(rstandard(arima.ts.2.2.2), type = "Ljung-Box")
+Box.test(rstandard(arima.ts.2.2.3), type = "Ljung-Box")
 # check for normality of error terms
-shapiro.test(rstandard(arima.seas_trans.2.2))
-shapiro.test(rstandard(arima.trans.2.2))
+shapiro.test(rstandard(arima.seasonal.ts.2.2.1))
+shapiro.test(rstandard(arima.ts.2.2.2))
+shapiro.test(rstandard(arima.ts.2.2.3))
+# check for independence of error terms
+runs(rstandard(arima.seasonal.ts.2.2.1))
+runs(rstandard(arima.ts.2.2.2))
+runs(rstandard(arima.ts.2.2.3))
 
 ```
-**Ljung-Box**
-
-*Seasonal Transformed Model*
-
-For the seasonal transformed data, the residuals from the Ljung-Box test have a high p-value of 0.4986, which indicate that the residuals are uncorrelated. 
-
-*Transformed Model*
-
-Similarly, in the transformed data with no seasonality, the p-value is very high, 0.5518, therefore we do not have evidence against the null hypothesis that the error terms are uncorrelated.
-
-**Runs Test**
-
-*Seasonal Transformed Model*
-
-For the runs test, we notice that the seasonal transformed model has observed runs of 51 versus expected runs of 49.31683 The p-value of this test is large, equalling 0.81, which means we do not have statistically significant evidence against independence of the error terms in the model. 
-
-*Transformed Model*
-
-For the transformed model, the model has an observed runs of 53 and expected of 47.89109 Similar to the seasonal model, this runs test has a high p-value of 0.325 Although this is not as high as the seasonal model, it still indicated that we do not have statistically significant evidence against independence of the error terms in the model. 
-
-**Shapiro Wilks Test**
-
-*Seasonal Transformed Model*
-
-For the seasonal model, we notice that the p-value for this test is large, with 0.4103, indicating that we do not have evidence against the null hypothesis that the data are normal. 
-
-*Transformed Model*
-
-Similar to the seasonal model, the transformed data have a p-value of 0.1024 indicating that we do not have evidence against the null hypothesis that the data are normal. 
 
 ## Visualize residuals 
 ```{r}
-par(mfrow = c(2,2))
-# acf of seasonal and transformed residuals
-acf(rstandard(arima.seas_trans.2.2))
-acf(rstandard(arima.trans.2.2))
+layout(matrix(c(1,2,3,4,5,0), nrow = 3, ncol = 2, byrow = TRUE))
 
+acf(arima.seasonal.ts.2.2.1$residuals)
+acf(arima.ts.2.2.2$residuals)
+acf(arima.ts.2.2.3$residuals)
+ 
+ 
 # pacf of seasonal and transformed residuals
-pacf(rstandard(arima.seas_trans.2.2))
-pacf(rstandard(arima.trans.2.2))
+pacf(arima.seasonal.ts.2.2.1$residuals)
+pacf(arima.ts.2.2.2$residuals)
+pacf(arima.ts.2.2.3$residuals)
 
-# plot residuals
-plot(rstandard(arima.seas_trans.2.2),
-     type = "o", 
-     main = "12/21-3/1 Seasonal + Trans Residuals", 
-     ylab = "Standardized Residuals")
-abline(h=0,lty=2,col="red")
-plot(rstandard(arima.trans.2.2),
-     type = "o", 
-     main = "12/21-3/1 Transformed Residuals", 
-     ylab = "Standardized Residuals")
-abline(h=0,lty=2,col="red")
 
 # Histogram of residuals
-hist(rstandard(arima.seas_trans.2.2),
-     main = "12/21-3/1 Seasonal + Trans Residuals")
-hist(rstandard(arima.trans.2.2),
-     main = "12/21-3/1 Transformed Residuals")
+hist(arima.seasonal.ts.2.2.1$residuals)
+hist(arima.ts.2.2.2$residuals)
+hist(arima.ts.2.2.3$residuals)
 
 # qqnorm plots of residuals
-qqnorm(rstandard(arima.seas_trans.2.2),
-       main = "12/21-3/1 Seasonal + Trans Residuals")
-qqline(rstandard(arima.seas_trans.2.2))
-qqnorm(rstandard(arima.trans.2.2),
-       main = "12/21-3/1 Transformed Residuals")
-qqline(rstandard(arima.trans.2.2))
+qqnorm(rstandard(arima.seasonal.ts.2.2.1))
+qqline(rstandard(arima.seasonal.ts.2.2.1))
 
-# Diagnostic Plot 
-tsdiag(arima.seas_trans.2.2)
-tsdiag(arima.trans.2.2)
+qqnorm(rstandard(arima.ts.2.2.2))
+qqline(rstandard(arima.ts.2.2.2))
+
+qqnorm(rstandard(arima.ts.2.2.3))
+qqline(rstandard(arima.ts.2.2.3))
+
 ```
-We notice in the residual visualization, they are very similar, and do not show strong signs of correlation. We can see this in the acf and pacfs, where they show a zero mean white noise process. However, in the transformed non seasonal data we see that the pacf is showing pattern indicating that we will need to use the ARIMA(3,1,2) model. In the plot of the residuals, we we see that they are generally centered around zero, however there are some outlier that are beyond 3, which we should look out for in our analysis. Both histograms are centered around zero, however we notice in the seasonal model some outliers. In the normality plots, we notice that there is a general linear trend for both data sets, however, the tail ends of data points are very far away from the line, which indicate the data is not normal. In the tsdiag(), Diagnostic Plots for Time-Series Fits function it is further reiterating our points of zero mean, white noise, independent process of residuals that are not exactly normal. In choosing one transformation over the other, we will go for the ARIMA(3,1,2) model. 
+## Forecasting
 
+```{r}
+fit.1 <- Arima(trans.ts.2.2, order = c(3,0,0), seasonal = list(order = c(0,1,1), period = 7))
+fit.1.ts <- ts(fit.1$fitted, frequency = 7, start = c(1,5))
+fit.2 <- Arima(trans.seasonal.ts.2.2, order = c(3,1,2))
+
+par(mfrow = c(2,1))
+plot(trans.ts.2.2, ylab = "cases^0.2", main = "AR(3)xIMA(1,1)[7] accuracy")
+lines(fit.1$fitted, col = "lightblue4")
+plot(trans.seasonal.ts.2.2, ylab = "cases^0.2", main = "ARIMA(3,1,2) accuracy")
+lines(fit.2$fitted, col = "darkorange")
+
+testdata <- read.csv(text = getURL("https://raw.githubusercontent.com/datadesk/california-coronavirus-data/master/latimes-county-totals.csv")) %>%
+  filter(county == "Los Angeles") %>%
+  mutate(date = date(date), month = month(date)) %>%
+  map_df(rev) %>%
+  filter(!is.na(new_confirmed_cases) & between(date, date("2021-04-01"),date("2021-04-30")))
+
+testdata.ts <- ts((testdata$new_confirmed_cases)^0.2, frequency = 7, start = c(16,1))
+par(mfrow = c(1,1))
+plot(forecast(fit.1.ts,h=30), col = "orange", main = "Forecasts from ARIMA(3,1,2)",ylab="Number of Cases ^ 0.2", xlab = "Weeks")
+lines(trans.seasonal.ts.2.2)
+lines(testdata.ts, col = "red")
+
+```
